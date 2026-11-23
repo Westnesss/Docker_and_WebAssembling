@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docker Container PoC - FICA UCE</title>
+  <style>
+    :root {
+      --bg: #f5f7fb; --card: #ffffff; --border: #e3e8f0; --text: #1e293b;
+      --muted: #64748b; --accent: #1d63ed; --ok: #16a34a; --ok-bg: #dcfce7;
+      --err: #dc2626; --err-bg: #fee2e2;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+      min-height: 100vh; padding: 40px 16px;
+    }
+    .container { max-width: 920px; margin: 0 auto; }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px; margin-bottom: 28px;
+    }
+    h1 { font-size: 1.6rem; display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 12px; background: var(--accent);
+      display: grid; place-items: center; font-size: 1.4rem;
+    }
+    .subtitle { color: var(--muted); font-size: .9rem; margin-top: 4px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;
+      border-radius: 999px; font-weight: 600; font-size: .9rem;
+      background: var(--ok-bg); color: var(--ok);
+    }
+    .badge.down { background: var(--err-bg); color: var(--err); }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%; background: currentColor;
+      box-shadow: 0 0 0 0 currentColor; animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(22,163,74,.5); }
+      70% { box-shadow: 0 0 0 10px rgba(22,163,74,0); }
+      100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px 20px; box-shadow: 0 1px 3px rgba(15,23,42,.05);
+    }
+    .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .value {
+      margin-top: 6px; font-size: 1.05rem; font-weight: 600; word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    .summary { margin-top: 24px; }
+    .summary h2 { font-size: 1.1rem; margin-bottom: 10px; }
+    .summary p { color: var(--muted); margin-bottom: 14px; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .step {
+      background: #eef4ff; color: var(--accent); border-radius: 8px; padding: 6px 12px;
+      font-size: .85rem; font-weight: 600;
+    }
+    .arrow { color: var(--muted); }
+    .summary ul { padding-left: 20px; color: var(--text); font-size: .92rem; }
+    .summary li { margin-bottom: 6px; }
+    code { background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-size: .85em; }
+    footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 28px; }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1><span class="logo">🐳</span> Docker Container PoC - FICA UCE</h1>
+        <p class="subtitle">Software Architecture · Information Systems Engineering</p>
+      </div>
+      <span id="badge" class="badge"><span class="dot"></span><span id="badge-text">Container Running</span></span>
+    </header>
+
+    <section class="grid">
+      <div class="card"><div class="label">Container hostname</div><div class="value" id="hostname">—</div></div>
+      <div class="card"><div class="label">OS / Platform</div><div class="value" id="platform">—</div></div>
+      <div class="card"><div class="label">Runtime</div><div class="value" id="runtime">—</div></div>
+      <div class="card"><div class="label">Server timestamp (UTC)</div><div class="value" id="timestamp">—</div></div>
+    </section>
+
+    <section class="card summary">
+      <h2>Container architecture</h2>
+      <p>
+        This page is served by a zero-dependency Python HTTP server packaged in a
+        <strong>multi-stage, Alpine-based</strong> Docker image.
+      </p>
+      <div class="flow">
+        <span class="step">Dockerfile</span><span class="arrow">→</span>
+        <span class="step">Stage 1: builder</span><span class="arrow">→</span>
+        <span class="step">Stage 2: python:3.11-alpine</span><span class="arrow">→</span>
+        <span class="step">Container :8080</span>
+      </div>
+      <ul>
+        <li><strong>Builder stage</strong> byte-compiles the code; only the result is copied to the final image.</li>
+        <li><strong>Alpine Linux</strong> base keeps the image small (~50 MB) with a minimal attack surface.</li>
+        <li>Runs as a <strong>non-root user</strong> and exposes only port <code>8080</code>.</li>
+        <li>A <strong>HEALTHCHECK</strong> polls <code>/health</code> so Docker knows the app is alive.</li>
+        <li>Shares the host kernel: isolated with <strong>namespaces</strong>, limited with <strong>cgroups</strong>.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Auto-refresh every 5 s · JSON: <a href="/api/status">/api/status</a> · Health: <a href="/health">/health</a>
+    </footer>
+  </div>
+
+  <script>
+    const fields = ["hostname", "platform", "runtime", "timestamp"];
+
+    async function loadStatus() {
+      const badge = document.getElementById("badge");
+      const badgeText = document.getElementById("badge-text");
+      try {
+        const res = await fetch("/api/status", { cache: "no-store" });
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        fields.forEach(f => {
+          let v = data[f];
+          if (f === "platform" && data.os) v = `${data.os} · ${data.platform}`;
+          if (f === "timestamp") v = v.replace("T", " ").replace("+00:00", "");
+          document.getElementById(f).textContent = v;
+        });
+        badge.classList.remove("down");
+        badgeText.textContent = "Container Running";
+      } catch (err) {
+        badge.classList.add("down");
+        badgeText.textContent = "Container Unreachable";
+      }
+    }
+
+    loadStatus();
+    setInterval(loadStatus, 5000);
+  </script>
+</body>
+</html>

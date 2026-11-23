@@ -1,0 +1,19 @@
+# Only app/ is needed inside the image
+.git
+.gitignore
+.github
+.vscode
+.idea
+**/__pycache__
+**/*.py[cod]
+*.log
+.env
+.env.*
+README.md
+LICENSE
+docs/
+Dockerfile
+docker-compose.yml
+.dockerignore
+.DS_Store
+Thumbs.db
